@@ -3,18 +3,14 @@
   "builds": [
     {
       "src": "index.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": { "includeFiles": ["node_modules/mysql2/**/*"] }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api"
+      "dest": "index.js"
     }
-  ],
-  "functions": {
-    "api/**/*.js": {
-      "includeFiles": ["node_modules/mysql2/**/*"]
-    }
-  }
+  ]
 }
