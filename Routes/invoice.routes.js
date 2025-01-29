@@ -7,7 +7,7 @@ import {
   addInvoice,
 } from "../Controller/invoice.controller.js";
 
-router.get("/invoice", getAllInvoice);
+router.get("/invoice", verifyUser, getAllInvoice);
 router.get("/invoice/:id", verifyUser, getInvoiceById);
 router.post("/invoice", verifyUser, addInvoice);
 

@@ -108,36 +108,36 @@ export const SaleMonthlyProducts = async (req, res) => {
   const {
     product_id,
     quantity,
-    advance_payment,
-    remaining_balance,
-    installment_amount,
-    total_installments,
-    remaining_installments,
-    installment_due_date,
-    final_payment_date,
+    peshaky_payment,
+    paray_mawa,
+    qty_qist,
+    total_qistakan,
+    qisty_mawa,
+    paray_zyada,
+    date,
+    final_date,
     status,
     customer_name,
     customer_phoneNo,
     customer_address,
   } = req.body;
 
+  // Validate the required fields
   if (!product_id) {
     return res.status(400).json({ msg: "product_id is required!" });
-  } else if (!advance_payment) {
+  } else if (!peshaky_payment) {
     return res.status(400).json({ msg: "salling_price is required!" });
   } else if (!quantity) {
     return res.status(400).json({ msg: "quantity is required!" });
-  } else if (!remaining_balance) {
-    return res.status(400).json({ msg: "remaining_balance is required!" });
-  } else if (!installment_amount) {
-    return res.status(400).json({ msg: "installment_amount is required!" });
-  } else if (!total_installments) {
-    return res.status(400).json({ msg: "total_installments is required!" });
-  } else if (!remaining_installments) {
-    return res.status(400).json({ msg: "remaining_installments is required!" });
-  } else if (!installment_due_date) {
-    return res.status(400).json({ msg: "installment_due_date is required!" });
-  } else if (!final_payment_date) {
+  } else if (!qty_qist) {
+    return res.status(400).json({ msg: "qty_qist is required!" });
+  } else if (!total_qistakan) {
+    return res.status(400).json({ msg: "total_qistakan is required!" });
+  } else if (!qisty_mawa) {
+    return res.status(400).json({ msg: "qisty_mawa is required!" });
+  } else if (!date) {
+    return res.status(400).json({ msg: "date is required!" });
+  } else if (!final_date) {
     return res.status(400).json({ msg: "final_payment_date is required!" });
   } else if (!status) {
     return res.status(400).json({ msg: "status is required!" });
@@ -148,27 +148,52 @@ export const SaleMonthlyProducts = async (req, res) => {
   }
 
   try {
-    // Calculate the total price
-    const total_prices = installment_amount * total_installments;
+    // Fetch the product details using the product_id
+    const product = await ProductsModel.findOne({
+      where: { id: product_id },
+      attributes: ["product_price"], // Assuming the price field in the ProductsModel is 'price'
+    });
+
+    if (!product) {
+      return res.status(404).json({ msg: "Product not found" });
+    }
+    const product_price = parseFloat(product.product_price); // Ensure it's a number
+    const paray_zyada_num = parseFloat(paray_zyada); // Ensure it's a number
+    const peshaky_payment_num = parseFloat(peshaky_payment); // Ensure it's a number
+
+    // Log values for debugging
+    console.log("Product Price:", product_price);
+    console.log("Paray Zyada:", paray_zyada_num);
+    console.log("Peshaky Payment:", peshaky_payment_num);
+
+    // Calculate the total price for the installments
+    const total_after_extra = product_price + paray_zyada_num;
+    const total_prices = total_after_extra - peshaky_payment_num;
+
+    // Log the calculated values
+    console.log("Calculated total_after_extra:", total_after_extra);
+    console.log("Calculated total_prices:", total_prices);
 
     // Ensure total_price is a valid number
     if (isNaN(total_prices) || total_prices <= 0) {
       return res.status(400).json({ msg: "Invalid total price calculation" });
     }
 
-    // Create a new installment sale record with total_prices
+    // Create a new installment sale record with total_pricess and product_price
     const newInstallmentSale = await InstallmentSalesModel.create({
       product_id,
       quantity,
-      advance_payment,
-      remaining_balance,
-      installment_amount,
-      total_installments,
-      remaining_installments,
-      installment_due_date,
-      final_payment_date,
+      peshaky_payment: peshaky_payment_num,
+      paray_mawa: total_prices,
+      qty_qist,
+      total_qistakan,
+      paray_zyada: paray_zyada_num,
+      qisty_mawa,
+      date,
+      final_date,
       status,
-      total_price: total_prices, // Pass the calculated total_price here
+      product_price, // Save the product price
+      total_price: total_after_extra, // Pass the calculated total_price here
       customer_name,
       customer_phoneNo,
       customer_address,
@@ -210,24 +235,22 @@ export const MakeInstallmentPayment = async (req, res) => {
     }
 
     // Check if the payment amount is greater than the remaining balance
-    if (payment_amount > installmentSale.remaining_balance) {
+    if (payment_amount > installmentSale.paray_mawa) {
       return res
         .status(400)
         .json({ msg: "Payment amount exceeds remaining balance!" });
     }
 
     // Deduct the payment from the remaining balance
-    const updatedRemainingBalance =
-      installmentSale.remaining_balance - payment_amount;
+    const updatedRemainingBalance = installmentSale.paray_mawa - payment_amount;
 
     // Decrease the number of remaining installments by 1
-    const updatedRemainingInstallments =
-      installmentSale.remaining_installments - 1;
+    const updatedRemainingInstallments = installmentSale.qty_qist - 1;
 
     // Update the installment sale record
     const updatedInstallmentSale = await installmentSale.update({
-      remaining_balance: updatedRemainingBalance,
-      remaining_installments: updatedRemainingInstallments,
+      paray_mawa: updatedRemainingBalance,
+      qty_qist: updatedRemainingInstallments,
     });
 
     // If the remaining installments are 0, set the status to "Paid"

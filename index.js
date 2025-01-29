@@ -36,7 +36,7 @@ app.use(cors(corsOptions));
 // Session middleware
 app.use(
   session({
-    secret: process.env.SESS_SECRET,
+    secret: process.env.SESS_SECRET || "2759fkn3knvkebvuebfkgh3ubevgo",
     resave: false,
     saveUninitialized: true,
     store: store,

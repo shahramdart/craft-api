@@ -20,6 +20,10 @@ const InstallmentSalesModel = db.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    product_price: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+    },
     quantity: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -28,31 +32,35 @@ const InstallmentSalesModel = db.define(
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
-    advance_payment: {
+    peshaky_payment: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
-    remaining_balance: {
+    paray_zyada: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
-    installment_amount: {
+    paray_mawa: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
-    total_installments: {
+    qty_qist: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+    },
+    total_qistakan: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    remaining_installments: {
+    qisty_mawa: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    installment_due_date: {
+    date: {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    final_payment_date: {
+    final_date: {
       type: DataTypes.DATE,
       allowNull: false,
     },

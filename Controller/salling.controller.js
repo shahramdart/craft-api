@@ -3,6 +3,7 @@ import SallingProductModel from "../Models/saling.model.js";
 import db from "../Config/database.js";
 import ProductsModel from "../Models/products.model.js";
 import SalesModel from "../Models/sales.model.js";
+import moment from "moment";
 
 //  ? Get all saling product
 export const getAllSalling = async (req, res) => {
@@ -38,7 +39,6 @@ export const getSallingById = async (req, res) => {
 };
 
 // ? sale product and the data inserts to invoice table
-
 export const addSalling = async (req, res) => {
   const {
     salling_date,
@@ -50,6 +50,7 @@ export const addSalling = async (req, res) => {
     product_id,
     brand_id,
     invoice_customer,
+    category_id,
   } = req.body;
 
   if (!salling_quantity) {
@@ -101,11 +102,15 @@ export const addSalling = async (req, res) => {
     const profit_amount = profit_per_unit * salling_quantity;
 
     // Insert into the salling table
-    console.log(salling);
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.status(401).json({ msg: "User is not logged in" });
+    }
 
     const salling = await SallingProductModel.create(
       {
-        salling_date: sall_date,
+        salling_date: sall_date || Date.now(),
         salling_quantity,
         salling_price,
         salling_discount,
@@ -117,7 +122,7 @@ export const addSalling = async (req, res) => {
         product_id,
         category_id: product.category_id,
         brand_id: product.brand_id,
-        user_id: req.userId,
+        user_id: userId, // Use session userId
       },
       { transaction }
     );
@@ -134,14 +139,14 @@ export const addSalling = async (req, res) => {
     // Insert into the invoice table
     const invoice = await InvoiceModel.create(
       {
-        invoice_quantity: salling_quantity,
-        invoice_pirce: salling_price,
-        invoice_total_pirce: salling_total_price,
-        invoice_status: salling_status, // Example status
-        invoice_date: salling_date,
-        invoice_customer: invoice_customer || "Walk-in", // Default customer if not provided
+        invoice_quantity: salling.salling_quantity,
+        invoice_pirce: salling.salling_price,
+        invoice_total_pirce: salling.salling_total_price,
+        invoice_status: salling.salling_status, // Example status
+        invoice_date: salling.salling_date,
+        invoice_customer: salling.invoice_customer || "Walk-in", // Default customer if not provided
         product_id,
-        user_id: req.userId, // Assuming user ID is retrieved from authentication
+        user_id: userId, // Assuming user ID is retrieved from authentication
       },
       { transaction }
     );
@@ -158,7 +163,8 @@ export const addSalling = async (req, res) => {
         discount: 0.0,
         profit_amount, // Save profit for the sale
         brand_id: product.brand_id,
-        user_id: req.userId,
+        category_id: product.category_id,
+        user_id: userId,
       },
       { transaction }
     );
