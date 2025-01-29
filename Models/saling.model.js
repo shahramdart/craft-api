@@ -26,11 +26,15 @@ const SallingProductModel = db.define(
       allowNull: false,
     },
     salling_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.FLOAT,
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        min: 1, // Ensure price is greater than 0
+      },
     },
     salling_discount: {
-      type: DataTypes.FLOAT, // Or DataTypes.DECIMAL(5, 2) for fixed precision
+      type: DataTypes.FLOAT,
       allowNull: false,
     },
     salling_status: {
@@ -38,18 +42,32 @@ const SallingProductModel = db.define(
       allowNull: false,
     },
     price_after_discount: {
-      type: DataTypes.DECIMAL(10, 2), // Suitable for monetary values
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        min: 0,
+        isLessThanSallingPrice(value) {
+          if (value > this.salling_price) {
+            throw new Error(
+              "Discounted price cannot exceed the original price"
+            );
+          }
+        },
+      },
     },
     salling_total_price: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        min: 1, // Ensure total price is greater than 0
+      },
     },
     salling_description: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-
     product_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -59,16 +77,16 @@ const SallingProductModel = db.define(
     },
     category_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       validate: {
-        notEmpty: true,
+        notEmpty: false,
       },
     },
     brand_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       validate: {
-        notEmpty: true,
+        notEmpty: false,
       },
     },
     user_id: {
@@ -79,27 +97,32 @@ const SallingProductModel = db.define(
       },
     },
   },
-
   {
     timestamps: true,
   }
 );
 
+// Relationships
+
+// SallingProductModel belongs to CategoryModel
 SallingProductModel.belongsTo(CategoryModel, {
   as: "category",
   foreignKey: "category_id",
 });
 CategoryModel.hasMany(SallingProductModel, { foreignKey: "category_id" });
 
+// SallingProductModel belongs to ProductsModel
 SallingProductModel.belongsTo(ProductsModel, {
   as: "product",
   foreignKey: "product_id",
 });
-CategoryModel.hasMany(SallingProductModel, { foreignKey: "category_id" });
+ProductsModel.hasMany(SallingProductModel, { foreignKey: "product_id" }); // Corrected this line
 
+// SallingProductModel belongs to Users
 SallingProductModel.belongsTo(Users, { as: "user", foreignKey: "user_id" });
 Users.hasMany(SallingProductModel, { foreignKey: "user_id" });
 
+// SallingProductModel belongs to BrandsModel
 SallingProductModel.belongsTo(BrandsModel, {
   as: "brands",
   foreignKey: "brand_id",

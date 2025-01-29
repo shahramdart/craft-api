@@ -43,10 +43,6 @@ const ProductsModel = db.define("products", {
       notEmpty: true,
     },
   },
-  product_color: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-  },
   category_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -54,7 +50,6 @@ const ProductsModel = db.define("products", {
       notEmpty: true,
     },
   },
-
   user_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
