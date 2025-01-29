@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import session from "express-session";
-import dotenv from "dotenv";
 import UserRoutes from "./Routes/users.routes.js";
 import AuthRoutes from "./Routes/auth.routes.js";
 import PermissionRoutes from "./Routes/permission.routes.js";
@@ -15,6 +14,7 @@ import sequelizeStore from "connect-session-sequelize";
 import SallingRoutes from "./Routes/salling.routes.js";
 import db from "./Config/database.js";
 import Expenses from "./Routes/expenses.routes.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -77,7 +77,7 @@ app.use("/api", SallingRoutes);
 // })();
 
 // Sync session store
-// store.sync(); // Sync session store with the database
+// store.sync();
 
 // Start the server
 app.listen(PORT, () => {
