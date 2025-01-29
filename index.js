@@ -49,20 +49,20 @@ app.use(
 app.use(express.json());
 
 // Routes
-app.use("/api", UserRoutes);
-app.use("/api", AuthRoutes);
+app.use(UserRoutes);
+app.use(AuthRoutes);
 
-app.use("/api", UserRoutes);
-app.use("/api", AuthRoutes);
-app.use("/api", PermissionRoutes);
-app.use("/api", BrandsRoutes);
-app.use("/api", ProductRoutes);
-app.use("/api", PaymentRoutes);
-app.use("/api", ProductsRoutes);
-app.use("/api", SaleRoutes);
-app.use("/api", Expenses);
-app.use("/api", InvoiceRoutes);
-app.use("/api", SallingRoutes);
+app.use(UserRoutes);
+app.use(AuthRoutes);
+app.use(PermissionRoutes);
+app.use(BrandsRoutes);
+app.use(ProductRoutes);
+app.use(PaymentRoutes);
+app.use(ProductsRoutes);
+app.use(SaleRoutes);
+app.use(Expenses);
+app.use(InvoiceRoutes);
+app.use(SallingRoutes);
 
 // Database Connection & Sync (Uncomment to test database connection)
 // (async () => {
