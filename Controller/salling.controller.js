@@ -4,6 +4,7 @@ import db from "../Config/database.js";
 import ProductsModel from "../Models/products.model.js";
 import SalesModel from "../Models/sales.model.js";
 import moment from "moment";
+import ArchivesModel from "../Models/archives.model.js";
 
 //  ? Get all saling product
 export const getAllSalling = async (req, res) => {
@@ -52,6 +53,9 @@ export const addSalling = async (req, res) => {
     const category_id = parseInt(req.body.category_id, 10) || null;
     const brand_id = parseInt(req.body.brand_id, 10) || null;
     const invoice_customer = req.body.invoice_customer || "Walk-in";
+    const salling_date = req.body.salling_date
+      ? new Date(req.body.salling_date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0]; // Default to today if not provided
 
     if (!salling_quantity) {
       return res.status(400).json({ msg: "salling_quantity is required!" });
@@ -105,7 +109,7 @@ export const addSalling = async (req, res) => {
     // ✅ Insert Salling Record
     const salling = await SallingProductModel.create(
       {
-        salling_date: moment().format("YYYY-MM-DD"), // Format the date
+        salling_date, // Format the date
         salling_quantity,
         salling_price,
         salling_discount,
@@ -121,10 +125,6 @@ export const addSalling = async (req, res) => {
       },
       { transaction }
     );
-
-    // ✅ Update Product Quantity
-    const updatedQty = product.product_qty - salling_quantity;
-    await product.update({ product_qty: updatedQty }, { transaction });
 
     // ✅ Insert Invoice Record
     const invoice = await InvoiceModel.create(
@@ -158,6 +158,29 @@ export const addSalling = async (req, res) => {
       },
       { transaction }
     );
+
+    // ✅ Check Product Quantity and Archive if Necessary
+    const updatedQty = product.product_qty - salling_quantity;
+    await product.update({ product_qty: updatedQty }, { transaction });
+
+    if (updatedQty === 0) {
+      // Insert into Archives table
+      await ArchivesModel.create(
+        {
+          id: product.id,
+          product_name: product.product_name,
+          product_price: product.product_price,
+          product_qty: salling_quantity, // Correct quantity
+          description: product.description,
+          category_id: product.category_id,
+          brand_id: product.brand_id,
+        },
+        { transaction }
+      );
+
+      // Delete from Products table
+      // await product.destroy({ transaction });
+    }
 
     // ✅ Commit Transaction
     await transaction.commit();

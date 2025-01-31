@@ -63,8 +63,16 @@ export const createUser = async (req, res) => {
   const { name, email, password, user_phone, permission } = req.body;
 
   // Check if all required fields are provided
-  if (!name || !email || !password || !user_phone || !permission) {
-    return res.status(400).json({ msg: "All fields are required!" });
+  if (!name) {
+    return res.status(400).json({ msg: "name is required!" });
+  } else if (!email) {
+    return res.status(400).json({ msg: "email is required!" });
+  } else if (!password) {
+    return res.status(400).json({ msg: "password is required!" });
+  } else if (!permission) {
+    return res.status(400).json({ msg: "permission is required!" });
+  } else if (!user_phone) {
+    return res.status(400).json({ msg: "user_phone is required!" });
   }
 
   // Check if email already exists

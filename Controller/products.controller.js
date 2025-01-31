@@ -3,6 +3,7 @@ import ExpensesModel from "../Models/expenses.model.js";
 import ProductsModel from "../Models/products.model.js";
 import db from "../Config/database.js";
 import BrandsModel from "../Models/brands.model.js";
+import InvoiceModel from "../Models/invoice.model.js";
 
 // ? Get All Products
 export const getAllProduct = async (req, res) => {
@@ -26,14 +27,14 @@ export const getAllProduct = async (req, res) => {
   }
 };
 
-// ? Get all by qrcode   
+// ? Get all by qrcode
 export const getProductByQrCode = async (req, res) => {
-  const { qrcode } = req.params;  // Get QR code from URL parameters
+  const { qrcode } = req.params; // Get QR code from URL parameters
 
   try {
     // Query for the product based on the QR code
     const product = await ProductsModel.findOne({
-      where: { product_qrcode: qrcode },  // Match the QR code in the database
+      where: { product_qrcode: qrcode }, // Match the QR code in the database
       include: [
         { model: CategoryModel, as: "category", attributes: ["category_name"] },
         { model: BrandsModel, as: "brands", attributes: ["brand_name"] },
@@ -44,13 +45,13 @@ export const getProductByQrCode = async (req, res) => {
       return res.status(404).json({ msg: "Product not found" });
     }
 
-    res.status(200).json(product);  // Return the found product
+    res.status(200).json(product); // Return the found product
   } catch (error) {
     res
       .status(500)
       .json({ msg: "Error retrieving product", error: error.message });
   }
-}
+};
 
 // ? Get getTotalProductQuantity
 export const getTotalProductQuantity = async (req, res) => {
@@ -262,6 +263,12 @@ export const deleteProductById = async (req, res) => {
     }
 
     const { product_price, product_qty, payment_type_id } = product;
+
+    // Remove the product reference from invoices by setting product_id to NULL
+    await InvoiceModel.update(
+      { product_id: product.id },
+      { where: { product_id: id } }
+    );
 
     // Find the corresponding expenses record
     const expense = await ExpensesModel.findOne({ where: { product_id: id } });
