@@ -27,7 +27,9 @@ export const getAllExpenses = async (req, res) => {
         "quantity",
         "createdAt",
         "purchase_price",
+        "purchase_price_dolar",
         "total_purchase",
+        "total_purchase_dolar",
         "category_id",
         "product_id",
         "user_id",
@@ -50,7 +52,9 @@ export const getAllExpenses = async (req, res) => {
       quantity: expense.quantity,
       createdAt: expense.createdAt,
       purchase_price: expense.purchase_price,
+      purchase_price_dolar: expense.purchase_price_dolar,
       total_purchase: expense.total_purchase,
+      total_purchase_dolar: expense.total_purchase_dolar,
       user_name: expense.user ? expense.user.name : "User not found",
     }));
 
@@ -124,14 +128,20 @@ export const getSaleById = async (req, res) => {
 export const getTotalExpenses = async (req, res) => {
   try {
     // Calculate the sum of all total_price values in the sales table
-    const totalSales = await ExpensesModel.sum("total_purchase"); // Sum total_price column
+    const totalExpensess = await ExpensesModel.sum("total_purchase"); // Sum total_price column
+    const totalExpensesDolar = await ExpensesModel.sum("total_purchase_dolar"); // Sum total_price column
 
-    if (!totalSales) {
-      return res.status(404).json({ msg: "No sales data found!" });
+    if (!totalExpensess) {
+      return res.status(404).json({ msg: "No Expenses data found!" });
     }
 
+    const totalExpenses = {
+      total_purchase: totalExpensess || 0,
+      total_purchase_dolar: totalExpensesDolar || 0,
+    };
+
     // Return the total sales sum in the response
-    res.status(200).json({ total: `${totalSales}` });
+    res.status(200).json({ totalExpenses });
   } catch (error) {
     console.error("Error:", error);
     res

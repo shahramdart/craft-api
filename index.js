@@ -63,6 +63,8 @@ app.use("/api", SaleRoutes);
 app.use("/api", Expenses);
 app.use("/api", InvoiceRoutes);
 app.use("/api", SallingRoutes);
+app.use("/api", CustomerModel);
+import CustomerModel from "./Routes/customer.routes.js";
 
 // Database Connection & Sync (Uncomment to test database connection)
 // (async () => {

@@ -5,6 +5,8 @@ import ProductsModel from "../Models/products.model.js";
 import CategoryModel from "../Models/category.model.js";
 import Users from "../Models/user.model.js";
 import BrandsModel from "../Models/brands.model.js";
+import CustomerModel from "../Models/customer.model.js";
+import SalesModel from "../Models/sales.model.js";
 
 // ? Get all Invoice
 export const getAllInvoice = async (req, res) => {
@@ -49,6 +51,72 @@ export const getAllInvoice = async (req, res) => {
     res
       .status(500)
       .json({ msg: "Error Fetching invoice!", error: error.message });
+  }
+};
+
+// ? get salling by customers
+
+export const getSalesByCustomerName = async (req, res) => {
+  try {
+    const { customerName } = req.params;
+
+    // Fetch all sales for the specified customer with their invoices
+    const salesData = await SalesModel.findAll({
+      include: [
+        {
+          model: InvoiceModel,
+          as: "invoices", // The alias used in the association
+          where: { invoice_customer: customerName }, // Filter by invoice_customer in InvoiceModel
+          attributes: [
+            "invoice_quantity",
+            "invoice_pirce",
+            "invoice_pirce_dolar",
+            "invoice_total_pirce",
+            "invoice_total_pirce_dolar",
+            "invoice_status",
+            "invoice_date",
+          ],
+        },
+      ],
+    });
+
+    if (!salesData || salesData.length === 0) {
+      return res.status(404).json({ msg: "No sales found for this customer." });
+    }
+
+    // Calculate total quantity sold to the customer
+    const totalQuantitySold = salesData.reduce((total, sale) => {
+      return (
+        total +
+        sale.invoices.reduce(
+          (sum, invoice) => sum + invoice.invoice_quantity,
+          0
+        )
+      );
+    }, 0);
+
+    // Format the response
+    const formattedSales = salesData.map((sale) => ({
+      id: sale.id,
+      invoices: sale.invoices.map((invoice) => ({
+        invoice_quantity: invoice.invoice_quantity,
+        invoice_pirce: invoice.invoice_pirce,
+        invoice_pirce_dolar: invoice.invoice_pirce_dolar,
+        invoice_total_pirce: invoice.invoice_total_pirce,
+        invoice_total_pirce_dolar: invoice.invoice_total_pirce_dolar,
+        invoice_status: invoice.invoice_status,
+        invoice_date: invoice.invoice_date,
+      })),
+    }));
+
+    // Return sales data with total quantity sold to the customer
+    return res.json({
+      total_quantity_sold: totalQuantitySold,
+      sales: formattedSales,
+    });
+  } catch (error) {
+    console.error("Error fetching sales data:", error);
+    return res.status(500).json({ msg: "Server error" });
   }
 };
 

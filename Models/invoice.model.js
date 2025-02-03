@@ -24,9 +24,17 @@ const InvoiceModel = db.define(
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
+    invoice_pirce_dolar: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+    },
     invoice_total_pirce: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+    },
+    invoice_total_pirce_dolar: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
     },
     invoice_status: {
       type: DataTypes.ENUM("کاش", "مانگانە"),
@@ -56,6 +64,15 @@ const InvoiceModel = db.define(
       validate: {
         notEmpty: true,
       },
+    },
+    sale_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "sales", // The table this references
+        key: "id",
+      },
+      onDelete: "CASCADE", // If sale is deleted, related invoices will be deleted
     },
   },
   {

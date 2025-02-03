@@ -5,9 +5,11 @@ import {
   getAllInvoice,
   getInvoiceById,
   addInvoice,
+  getSalesByCustomerName,
 } from "../Controller/invoice.controller.js";
 
 router.get("/invoice", verifyUser, getAllInvoice);
+router.get("/invoice/:customerName", verifyUser, getSalesByCustomerName);
 router.get("/invoice/:id", verifyUser, getInvoiceById);
 router.post("/invoice", verifyUser, addInvoice);
 

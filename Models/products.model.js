@@ -31,6 +31,10 @@ const ProductsModel = db.define("products", {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true,
   },
+  product_price_dolar: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+  },
   product_qty: {
     type: DataTypes.INTEGER,
     allowNull: false,

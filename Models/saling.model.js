@@ -27,10 +27,36 @@ const SallingProductModel = db.define(
     },
     salling_price: {
       type: DataTypes.FLOAT,
+      allowNull: true,
+      validate: {
+        notEmpty: false,
+        min: 1, // Ensure price is greater than 0
+      },
+    },
+    salling_price_dolar: {
+      type: DataTypes.FLOAT,
+      allowNull: true, // Allow null values
+      validate: {
+        min: 0, // Ensure it is not negative
+      },
+    },
+
+    salling_total_price: {
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       validate: {
         notEmpty: true,
-        min: 1, // Ensure price is greater than 0
+        min: 1, // Ensure total price is greater than 0
+      },
+    },
+    salling_total_price_dolar: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      validate: {
+        min: {
+          args: [0], // Allow 0 as the minimum value
+          msg: "salling_total_price_dolar must be greater than or equal to 0",
+        },
       },
     },
     salling_discount: {
@@ -41,6 +67,7 @@ const SallingProductModel = db.define(
       type: DataTypes.ENUM("کاش", "قیست"),
       allowNull: false,
     },
+
     price_after_discount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
@@ -56,14 +83,7 @@ const SallingProductModel = db.define(
         },
       },
     },
-    salling_total_price: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
-      validate: {
-        notEmpty: true,
-        min: 1, // Ensure total price is greater than 0
-      },
-    },
+
     salling_description: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -82,6 +102,7 @@ const SallingProductModel = db.define(
         notEmpty: false,
       },
     },
+
     brand_id: {
       type: DataTypes.INTEGER,
       allowNull: true,

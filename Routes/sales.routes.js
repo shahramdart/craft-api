@@ -6,7 +6,7 @@ import {
   getSaleById,
   getTotalSales,
   getTotalSaleForYear,
-  getTotalProfit
+  getTotalProfit,
 } from "../Controller/sale.controller.js";
 
 router.get("/sale", verifyUser, getAllSales);

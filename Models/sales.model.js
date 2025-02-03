@@ -4,6 +4,7 @@ import ProductsModel from "./products.model.js";
 import Users from "./user.model.js";
 import ProductCategoriesModel from "./category.model.js";
 import BrandsModel from "./brands.model.js";
+import InvoiceModel from "./invoice.model.js";
 
 // Define the SalesModel
 const SalesModel = db.define(
@@ -42,9 +43,20 @@ const SalesModel = db.define(
         min: 0.01, // Price must be at least 0.01
       },
     },
+    price_dolar: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+    },
     total_price: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+      validate: {
+        min: 0.01, // Total price must be at least 0.01
+      },
+    },
+    total_price_dolar: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
       validate: {
         min: 0.01, // Total price must be at least 0.01
       },
@@ -108,6 +120,9 @@ BrandsModel.hasMany(SalesModel, { foreignKey: "brand_id" });
 
 Users.hasMany(SalesModel, { foreignKey: "user_id" });
 SalesModel.belongsTo(Users, { foreignKey: "user_id" });
+
+SalesModel.hasMany(InvoiceModel, { foreignKey: "sale_id", as: "invoices" }); // A sale can have many invoices
+InvoiceModel.belongsTo(SalesModel, { foreignKey: "sale_id", as: "sale" }); // An invoice belongs to one sale
 
 // Export the SalesModel
 export default SalesModel;

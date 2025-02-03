@@ -14,10 +14,18 @@ const ExpensesModel = db.define(
       primaryKey: true,
     },
     total_purchase: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0,
+    },
+    total_purchase_dolar: {
+      type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0,
     },
     purchase_price: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0,
+    },
+    purchase_price_dolar: {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0,
     },

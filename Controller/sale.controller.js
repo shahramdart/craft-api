@@ -3,7 +3,6 @@ import ProductsModel from "../Models/products.model.js";
 import ProductCategoriesModel from "../Models/category.model.js";
 import Users from "../Models/user.model.js";
 import { Op } from "sequelize";
-import PermissionModels from "../Models/permission.model.js";
 import BrandsModel from "../Models/brands.model.js";
 
 // ? Get all sales
@@ -34,6 +33,8 @@ export const getAllSales = async (req, res) => {
         "quantity",
         "price",
         "total_price",
+        "total_price_dolar",
+        "price_dolar",
         "profit_amount",
         "createdAt",
         "category_id",
@@ -53,7 +54,9 @@ export const getAllSales = async (req, res) => {
       brand_name: sale.brand?.brand_name || "Category not found",
       quantity: sale.quantity,
       price: sale.price,
+      price_dolar: sale.price_dolar,
       total_price: sale.total_price,
+      total_price_dolar: sale.total_price_dolar,
       profit_amount: sale.profit_amount,
       user_name: sale.user?.name || "User not found", // User name
       createdAt: sale.createdAt,
@@ -66,6 +69,8 @@ export const getAllSales = async (req, res) => {
       .json({ msg: "Error retrieving data!", error: error.message });
   }
 };
+
+
 
 // ? Get sale by id
 export const getSaleById = async (req, res) => {
@@ -93,6 +98,7 @@ export const getSaleById = async (req, res) => {
         "quantity",
         "price",
         "total_price",
+        "total_price_dolar",
         "createdAt",
         "category_id",
         "user_id",
@@ -112,6 +118,7 @@ export const getSaleById = async (req, res) => {
       quantity: sale.quantity,
       price: sale.price,
       total_price: sale.total_price,
+      total_price_dolar: sale.total_price_dolar,
       user_name: sale.user?.name || "User not found", // User name
       createdAt: sale.createdAt,
     };
@@ -141,18 +148,29 @@ export const getTotalSales = async (req, res) => {
     // Check if the user is an Admin
     if (user && user.permission_id === 1) {
       // Admin sees total sales across all users
-      const totalSales = await SalesModel.sum("total_price"); // Sum all sales
-      return res.status(200).json({ totalSales: totalSales || 0 });
+      const totalSalesInDinars = await SalesModel.sum("total_price"); // Sum total price in IQD
+      const totalSalesInDollars = await SalesModel.sum("total_price_dolar"); // Sum total price in USD
+      const totalSales = {
+        total_price: totalSalesInDinars || 0,
+        total_price_dolar: totalSalesInDollars || 0,
+      };
+      return res.status(200).json({ totalSales });
     }
 
     // If the user is a Seller
     if (user.permission_id !== 1) {
       // Fetch total sales specific to the logged-in user
-      const totalSales = await SalesModel.sum("price", {
+      const totalSalesInDinars = await SalesModel.sum("price", {
         where: { user_id: req.userId }, // Only the user's sales
       });
-
-      return res.status(200).json({ totalSales: totalSales || 0 });
+      const totalSalesInDollars = await SalesModel.sum("price_dolar", {
+        where: { user_id: req.userId },
+      });
+      const totalSales = {
+        price: totalSalesInDinars || 0,
+        price_dolar: totalSalesInDollars || 0,
+      };
+      return res.status(200).json({ totalSales });
     }
 
     return res.status(403).json({ msg: "Access denied!" });

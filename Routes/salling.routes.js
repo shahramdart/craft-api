@@ -5,6 +5,7 @@ import {
   getAllSalling,
   getSallingById,
   addSalling,
+  
 } from "../Controller/salling.controller.js";
 
 router.get("/salling", verifyUser, getAllSalling);

@@ -102,23 +102,59 @@ export const getProductById = async (req, res) => {
 export const addProduct = async (req, res) => {
   const {
     product_name,
-    product_price,
+    product_price, // IQD
+    product_price_dolar, // USD
     product_qty,
     product_qrcode,
-    product_color, // This is optional
+    product_color, // Optional
     category_id,
     brand_id,
+    exchangeRate, // Required exchange rate
   } = req.body;
 
-  // Validate required fields
-  if (
-    !product_name ||
-    !product_price ||
-    !product_qty ||
-    !product_qrcode ||
-    !category_id
-  ) {
+  if (!product_name) {
     return res.status(400).json({ msg: "All required fields must be filled!" });
+  } else if (!product_qty) {
+    return res.status(400).json({ msg: "product_qty  it must be filled!" });
+  } else if (!product_qrcode) {
+    return res.status(400).json({ msg: "product_qrcode  it must be filled!" });
+  } else if (!category_id) {
+    return res.status(400).json({ msg: "category_id  it must be filled!" });
+  } else if (!exchangeRate) {
+    return res.status(400).json({ msg: "exchangeRate  it must be filled!" });
+  }
+
+  let priceDinarValue = 0;
+  let priceDolarValue = 0;
+
+  if (product_price && product_price.trim() !== "") {
+    priceDinarValue = parseFloat(product_price.replace(/,/g, ""));
+    if (isNaN(priceDinarValue)) {
+      return res.status(400).json({ msg: "Invalid product_price format." });
+    }
+
+    if (!isNaN(exchangeRate)) {
+      priceDolarValue = (priceDinarValue / parseFloat(exchangeRate)).toFixed(2);
+    } else {
+      return res.status(400).json({ msg: "Exchange rate must be valid." });
+    }
+  } else if (product_price_dolar && product_price_dolar.trim() !== "") {
+    priceDolarValue = parseFloat(product_price_dolar.replace(/,/g, ""));
+    if (isNaN(priceDolarValue)) {
+      return res
+        .status(400)
+        .json({ msg: "Invalid product_price_dolar format." });
+    }
+
+    if (!isNaN(exchangeRate)) {
+      priceDinarValue = Math.round(priceDolarValue * parseFloat(exchangeRate));
+    } else {
+      return res.status(400).json({ msg: "Exchange rate must be valid." });
+    }
+  } else {
+    return res.status(400).json({
+      msg: "Either product_price (IQD) or product_price_dolar (USD) must be provided.",
+    });
   }
 
   try {
@@ -133,10 +169,11 @@ export const addProduct = async (req, res) => {
     // Create the product
     const product = await ProductsModel.create({
       product_name,
-      product_price,
+      product_price: priceDinarValue,
+      product_price_dolar: priceDolarValue,
       product_qty,
       product_qrcode,
-      product_color: product_color || null, // Save as null if not provided
+      product_color: product_color || null,
       category_id,
       brand_id,
       user_id: req.userId,
@@ -144,8 +181,10 @@ export const addProduct = async (req, res) => {
 
     // Insert into expenses
     await ExpensesModel.create({
-      total_purchase: product_price * product_qty,
-      purchase_price: product_price,
+      total_purchase: priceDinarValue * product_qty,
+      total_purchase_dolar: priceDolarValue * product_qty,
+      purchase_price: priceDinarValue,
+      purchase_price_dolar: priceDolarValue,
       quantity: product_qty,
       category_id,
       product_id: product.id,
@@ -167,74 +206,105 @@ export const updateProductById = async (req, res) => {
   const { id } = req.params;
   const {
     product_name,
-    product_price,
+    product_price, // IQD
+    product_price_dolar, // USD
     product_qty,
     category_id,
     payment_type_id,
     listing_type_id,
+    exchangeRate, // Required exchange rate
   } = req.body;
 
-  // Check for missing fields
   if (
     (!product_name && null) ||
-    (!product_price && null) ||
     (!product_qty && null) ||
     (!category_id && null) ||
     (!payment_type_id && null) ||
-    (!listing_type_id && null)
+    (!listing_type_id && null) ||
+    (!product_price && !product_price_dolar) || // At least one price must be provided
+    !exchangeRate // Exchange rate is required
   ) {
+    return res.status(400).json({ msg: "All fields are required!" });
+  }
+
+  let priceDinarValue = 0;
+  let priceDolarValue = 0;
+
+  if (product_price && product_price.trim() !== "") {
+    priceDinarValue = parseFloat(product_price.replace(/,/g, ""));
+    if (isNaN(priceDinarValue)) {
+      return res.status(400).json({ msg: "Invalid product_price format." });
+    }
+
+    if (!isNaN(exchangeRate)) {
+      priceDolarValue = (priceDinarValue / parseFloat(exchangeRate)).toFixed(2);
+    } else {
+      return res.status(400).json({ msg: "Exchange rate must be valid." });
+    }
+  } else if (product_price_dolar && product_price_dolar.trim() !== "") {
+    priceDolarValue = parseFloat(product_price_dolar.replace(/,/g, ""));
+    if (isNaN(priceDolarValue)) {
+      return res
+        .status(400)
+        .json({ msg: "Invalid product_price_dolar format." });
+    }
+
+    if (!isNaN(exchangeRate)) {
+      priceDinarValue = Math.round(priceDolarValue * parseFloat(exchangeRate));
+    } else {
+      return res.status(400).json({ msg: "Exchange rate must be valid." });
+    }
+  } else {
     return res.status(400).json({
-      msg: "All fields are required!",
+      msg: "Either product_price (IQD) or product_price_dolar (USD) must be provided.",
     });
   }
 
-  const product = await ProductsModel.findOne({
-    where: { id },
-  });
+  const product = await ProductsModel.findOne({ where: { id } });
 
   if (!product) {
     return res.status(404).json({ msg: "No product found with this ID!" });
   }
 
-  // Calculate total_purchase correctly based on new price and quantity
-  const newTotalPurchase = product_price * product_qty;
+  const newTotalPurchaseDinar = priceDinarValue * product_qty;
+  const newTotalPurchaseDolar = priceDolarValue * product_qty;
 
   try {
-    // Update the product in the ProductsModel
+    // Update product in the database
     await ProductsModel.update(
       {
         product_name,
-        product_price,
+        product_price: priceDinarValue,
+        product_price_dolar: priceDolarValue,
         product_qty,
         category_id,
         payment_type_id,
         listing_type_id,
         user_id: req.userId,
       },
-      {
-        where: { id }, // Update the product with the same ID
-      }
+      { where: { id } }
     );
 
-    // Update the corresponding expense record in ExpensesModel
+    // Update expenses with both IQD & USD values
     await ExpensesModel.update(
       {
-        total_purchase: newTotalPurchase, // Update total_purchase based on new values
-        purchase_price: product_price, // Update purchase price
-        quantity: product_qty, // Update the quantity
-        category_id, // Maintain category_id
-        user_id: req.userId, // Ensure correct user_id is updated
+        total_purchase: newTotalPurchaseDinar, // Total in IQD
+        total_purchase_dolar: newTotalPurchaseDolar, // Total in USD
+        purchase_price: priceDinarValue, // Price per unit in IQD
+        purchase_price_dolar: priceDolarValue, // Price per unit in USD
+        quantity: product_qty,
+        category_id,
+        user_id: req.userId,
       },
-      {
-        where: { product_id: id }, // Ensure the same ID is updated in ExpensesModel
-      }
+      { where: { product_id: id } }
     );
 
     res.status(200).json({
       msg: `Product updated successfully by this ID: ${id}`,
       data: {
         product_name,
-        product_price,
+        product_price: priceDinarValue,
+        product_price_dolar: priceDolarValue,
         product_qty,
         category_id,
         payment_type_id,
