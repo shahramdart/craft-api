@@ -10,7 +10,7 @@ import {
 
 router.get("/invoice", verifyUser, getAllInvoice);
 router.get("/invoice/:customerName", verifyUser, getSalesByCustomerName);
-router.get("/invoice/:id", verifyUser, getInvoiceById);
+router.get("/invoices/:id", verifyUser, getInvoiceById); 
 router.post("/invoice", verifyUser, addInvoice);
 
 export default router;
