@@ -209,22 +209,23 @@ export const updateProductById = async (req, res) => {
     product_price, // IQD
     product_price_dolar, // USD
     product_qty,
+    product_qrcode,
+    product_color, // Optional
     category_id,
-    payment_type_id,
-    listing_type_id,
+    brand_id,
     exchangeRate, // Required exchange rate
   } = req.body;
 
-  if (
-    (!product_name && null) ||
-    (!product_qty && null) ||
-    (!category_id && null) ||
-    (!payment_type_id && null) ||
-    (!listing_type_id && null) ||
-    (!product_price && !product_price_dolar) || // At least one price must be provided
-    !exchangeRate // Exchange rate is required
-  ) {
-    return res.status(400).json({ msg: "All fields are required!" });
+  if (!product_name) {
+    return res.status(400).json({ msg: "All required fields must be filled!" });
+  } else if (!product_qty) {
+    return res.status(400).json({ msg: "Product quantity must be filled!" });
+  } else if (!product_qrcode) {
+    return res.status(400).json({ msg: "Product QR code must be filled!" });
+  } else if (!category_id) {
+    return res.status(400).json({ msg: "Category ID must be filled!" });
+  } else if (!exchangeRate) {
+    return res.status(400).json({ msg: "Exchange rate must be filled!" });
   }
 
   let priceDinarValue = 0;
@@ -260,14 +261,22 @@ export const updateProductById = async (req, res) => {
     });
   }
 
+  // Check if the product exists
   const product = await ProductsModel.findOne({ where: { id } });
 
   if (!product) {
     return res.status(404).json({ msg: "No product found with this ID!" });
   }
 
-  const newTotalPurchaseDinar = priceDinarValue * product_qty;
-  const newTotalPurchaseDolar = priceDolarValue * product_qty;
+  // Check if the product QR code is being changed and if it already exists
+  if (product_qrcode && product_qrcode !== product.product_qrcode) {
+    const existingProduct = await ProductsModel.findOne({
+      where: { product_qrcode },
+    });
+    if (existingProduct) {
+      return res.status(400).json({ msg: "Product QR Code already exists" });
+    }
+  }
 
   try {
     // Update product in the database
@@ -277,15 +286,19 @@ export const updateProductById = async (req, res) => {
         product_price: priceDinarValue,
         product_price_dolar: priceDolarValue,
         product_qty,
+        product_qrcode,
+        product_color: product_color || null,
         category_id,
-        payment_type_id,
-        listing_type_id,
+        brand_id,
         user_id: req.userId,
       },
       { where: { id } }
     );
 
     // Update expenses with both IQD & USD values
+    const newTotalPurchaseDinar = priceDinarValue * product_qty;
+    const newTotalPurchaseDolar = priceDolarValue * product_qty;
+
     await ExpensesModel.update(
       {
         total_purchase: newTotalPurchaseDinar, // Total in IQD
@@ -307,8 +320,9 @@ export const updateProductById = async (req, res) => {
         product_price_dolar: priceDolarValue,
         product_qty,
         category_id,
-        payment_type_id,
-        listing_type_id,
+        brand_id,
+        product_qrcode,
+        product_color,
       },
     });
   } catch (error) {

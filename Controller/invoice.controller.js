@@ -5,7 +5,6 @@ import ProductsModel from "../Models/products.model.js";
 import CategoryModel from "../Models/category.model.js";
 import Users from "../Models/user.model.js";
 import BrandsModel from "../Models/brands.model.js";
-import CustomerModel from "../Models/customer.model.js";
 import SalesModel from "../Models/sales.model.js";
 
 // ? Get all Invoice
@@ -55,27 +54,42 @@ export const getAllInvoice = async (req, res) => {
 };
 
 // ? get salling by customers
-
 export const getSalesByCustomerName = async (req, res) => {
   try {
     const { customerName } = req.params;
 
-    // Fetch all sales for the specified customer with their invoices
+    // Fetch sales with related data
     const salesData = await SalesModel.findAll({
       include: [
         {
           model: InvoiceModel,
-          as: "invoices", // The alias used in the association
-          where: { invoice_customer: customerName }, // Filter by invoice_customer in InvoiceModel
+          as: "invoices",
+          where: { invoice_customer: customerName },
           attributes: [
             "invoice_quantity",
             "invoice_pirce",
+            "invoice_customer",
             "invoice_pirce_dolar",
             "invoice_total_pirce",
             "invoice_total_pirce_dolar",
             "invoice_status",
             "invoice_date",
           ],
+        },
+        {
+          model: ProductsModel,
+          as: "product", // Ensure this alias matches your associations
+          attributes: ["product_name"],
+        },
+        {
+          model: CategoryModel,
+          as: "category", // Ensure this alias matches your associations
+          attributes: ["category_name"],
+        },
+        {
+          model: BrandsModel,
+          as: "brand", // Ensure this alias matches your associations
+          attributes: ["brand_name"],
         },
       ],
     });
@@ -84,20 +98,15 @@ export const getSalesByCustomerName = async (req, res) => {
       return res.status(404).json({ msg: "No sales found for this customer." });
     }
 
-    // Calculate total quantity sold to the customer
-    const totalQuantitySold = salesData.reduce((total, sale) => {
-      return (
-        total +
-        sale.invoices.reduce(
-          (sum, invoice) => sum + invoice.invoice_quantity,
-          0
-        )
-      );
-    }, 0);
+    console.log("Sale data is: ", salesData);
 
     // Format the response
     const formattedSales = salesData.map((sale) => ({
       id: sale.id,
+
+      product: sale.product?.product_name || "N/A",
+      category: sale.category?.category_name || "N/A",
+      brand: sale.brand?.brand_name || "N/A",
       invoices: sale.invoices.map((invoice) => ({
         invoice_quantity: invoice.invoice_quantity,
         invoice_pirce: invoice.invoice_pirce,
@@ -105,13 +114,21 @@ export const getSalesByCustomerName = async (req, res) => {
         invoice_total_pirce: invoice.invoice_total_pirce,
         invoice_total_pirce_dolar: invoice.invoice_total_pirce_dolar,
         invoice_status: invoice.invoice_status,
+        invoice_customer: invoice.invoice_customer,
         invoice_date: invoice.invoice_date,
       })),
     }));
 
-    // Return sales data with total quantity sold to the customer
     return res.json({
-      total_quantity_sold: totalQuantitySold,
+      total_quantity_sold: formattedSales.reduce(
+        (total, sale) =>
+          total +
+          sale.invoices.reduce(
+            (sum, invoice) => sum + invoice.invoice_quantity,
+            0
+          ),
+        0
+      ),
       sales: formattedSales,
     });
   } catch (error) {

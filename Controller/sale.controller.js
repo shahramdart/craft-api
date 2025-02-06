@@ -12,10 +12,12 @@ export const getAllSales = async (req, res) => {
       include: [
         {
           model: ProductsModel,
+          as: "product",
           attributes: ["product_name"], // Ensure correct column name
         },
         {
           model: ProductCategoriesModel,
+          as: "category",
           attributes: ["category_name"], // Ensure correct column name
         },
         {
@@ -24,8 +26,9 @@ export const getAllSales = async (req, res) => {
           attributes: ["brand_name"],
         },
         {
-          model: Users,
-          attributes: ["name"], // Select the user fields you want
+          model: Users, // Include the user details
+          as: "users", // Alias for the user relationship
+          attributes: ["name"], // Specify the attributes you need from Users
         },
       ],
       attributes: [
@@ -58,7 +61,7 @@ export const getAllSales = async (req, res) => {
       total_price: sale.total_price,
       total_price_dolar: sale.total_price_dolar,
       profit_amount: sale.profit_amount,
-      user_name: sale.user?.name || "User not found", // User name
+      user_name: sale.users?.name || "User not found", // User name
       createdAt: sale.createdAt,
     }));
 
@@ -69,8 +72,6 @@ export const getAllSales = async (req, res) => {
       .json({ msg: "Error retrieving data!", error: error.message });
   }
 };
-
-
 
 // ? Get sale by id
 export const getSaleById = async (req, res) => {

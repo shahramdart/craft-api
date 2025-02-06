@@ -110,16 +110,22 @@ SalesModel.beforeCreate((sale, options) => {
 
 // Associations
 ProductsModel.hasMany(SalesModel, { foreignKey: "product_id" });
-SalesModel.belongsTo(ProductsModel, { foreignKey: "product_id" });
+SalesModel.belongsTo(ProductsModel, {
+  foreignKey: "product_id",
+  as: "product",
+});
 
 ProductCategoriesModel.hasMany(SalesModel, { foreignKey: "category_id" });
-SalesModel.belongsTo(ProductCategoriesModel, { foreignKey: "category_id" });
+SalesModel.belongsTo(ProductCategoriesModel, {
+  foreignKey: "category_id",
+  as: "category",
+});
 
 SalesModel.belongsTo(BrandsModel, { foreignKey: "brand_id", as: "brand" });
 BrandsModel.hasMany(SalesModel, { foreignKey: "brand_id" });
 
 Users.hasMany(SalesModel, { foreignKey: "user_id" });
-SalesModel.belongsTo(Users, { foreignKey: "user_id" });
+SalesModel.belongsTo(Users, { foreignKey: "user_id", as: "users" });
 
 SalesModel.hasMany(InvoiceModel, { foreignKey: "sale_id", as: "invoices" }); // A sale can have many invoices
 InvoiceModel.belongsTo(SalesModel, { foreignKey: "sale_id", as: "sale" }); // An invoice belongs to one sale
