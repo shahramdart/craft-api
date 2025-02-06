@@ -5,6 +5,44 @@ import Users from "../Models/user.model.js";
 import { Op } from "sequelize";
 import BrandsModel from "../Models/brands.model.js";
 
+export const getTotalSalesMonths = async (req, res) => {
+  try {
+    const { month } = req.query; // Get selected month from frontend
+
+    let whereCondition = {};
+    if (month) {
+      const year = new Date().getFullYear(); // Get current year
+      whereCondition.createdAt = {
+        [Op.between]: [
+          new Date(`${year}-${month}-01`), // First day of the month
+          new Date(`${year}-${month}-31 23:59:59`), // Last day of the month
+        ],
+      };
+    }
+
+    // Calculate the sum for the selected month
+    const totalExpensess = await SalesModel.sum("total_price", {
+      where: whereCondition,
+    });
+
+    const totalExpensesDolar = await SalesModel.sum("total_price_dolar", {
+      where: whereCondition,
+    });
+
+    const totalExpenses = {
+      total_purchase: totalExpensess || 0,
+      total_purchase_dolar: totalExpensesDolar || 0,
+    };
+
+    res.status(200).json({ totalExpenses });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({
+      msg: "Error retrieving total expenses data",
+      error: error.message,
+    });
+  }
+};
 // ? Get all sales
 export const getAllSales = async (req, res) => {
   try {
